@@ -1,21 +1,27 @@
 -- [[ CONFIGURATION ]]
 local key = "NvKey.DC101" -- [[ TYPE YOUR KEY HERE ]]
-local CORRECT_KEY = "NvKey.DC101" -- The actual required key
+local CORRECT_KEY = "NvKey.DC101" -- The ONLY key that works
 
--- Function to run the hub
 local function ON_SUCCESS()
     print("Access Granted! Loading NvHub...")
     loadstring(game:HttpGet("https://raw.githubusercontent.com/Itsnvfr/NvHub/refs/heads/main/hub"))()
 end
 
--- [[ THE BYPASS CHECK ]]
--- This version strips spaces and is case-sensitive for maximum accuracy
-if key and key:gsub("%s+", "") == CORRECT_KEY:gsub("%s+", "") then
-    ON_SUCCESS()
-    return -- STOP EVERYTHING ELSE
+-- [[ SECURE BYPASS CHECK ]]
+local function CheckBypass()
+    -- Only bypass if the key is exactly right and NOT empty
+    if key ~= nil and key ~= "" and key == CORRECT_KEY then
+        return true
+    end
+    return false
 end
 
--- [[ UI SETUP (Only runs if key is WRONG) ]]
+if CheckBypass() then
+    ON_SUCCESS()
+    return -- Kills the script here so UI never loads
+end
+
+-- [[ UI SETUP (Only runs if Key is wrong or missing) ]]
 local UIS = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
@@ -27,30 +33,21 @@ local Accent = Color3.fromRGB(0, 255, 215)
 local DarkBG = Color3.fromRGB(10, 10, 10)
 local FontStyle = Enum.Font.Arcade
 
--- Main Frame
 local Main = Instance.new("Frame", KeyGui)
-Main.Size = UDim2.new(0, 350, 0, 200)
-Main.Position = UDim2.new(0.5, -175, 0.5, -100)
-Main.BackgroundColor3 = DarkBG
-Main.BorderSizePixel = 0
+Main.Size = UDim2.new(0, 350, 0, 200); Main.Position = UDim2.new(0.5, -175, 0.5, -100); Main.BackgroundColor3 = DarkBG; Main.BorderSizePixel = 0
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", Main).Color = Accent
 
--- Title
 local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "NVHUB | KEY SYSTEM"; Title.TextColor3 = Accent; Title.Font = FontStyle; Title.TextSize = 20; Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, 0, 0, 40); Title.Text = "NVHUB | KEY SYSTEM"; Title.TextColor3 = Accent; Title.Font = FontStyle; Title.TextSize = 20; Title.BackgroundTransparency = 1
 
--- Close Button (X)
 local Close = Instance.new("TextButton", Main)
 Close.Size = UDim2.new(0, 30, 0, 30); Close.Position = UDim2.new(1, -35, 0, 5); Close.Text = "X"; Close.TextColor3 = Color3.fromRGB(255, 50, 50); Close.BackgroundTransparency = 1; Close.Font = FontStyle; Close.TextSize = 20
 Close.MouseButton1Click:Connect(function() KeyGui:Destroy() end)
 
--- Key Input Box
 local Input = Instance.new("TextBox", Main)
-Input.Size = UDim2.new(0, 280, 0, 40); Input.Position = UDim2.new(0.5, -140, 0.45, 0); Input.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Input.Text = ""; Input.PlaceholderText = "ENTER KEY HERE..."; Input.TextColor3 = Color3.new(1, 1, 1); Input.Font = FontStyle; Input.TextSize = 16; Instance.new("UICorner", Input)
+Input.Size = UDim2.new(0, 280, 0, 40); Input.Position = UDim2.new(0.5, -140, 0.45, 0); Input.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Input.Text = ""; Input.PlaceholderText = "ENTER KEY..."; Input.TextColor3 = Color3.new(1, 1, 1); Input.Font = FontStyle; Input.TextSize = 16; Instance.new("UICorner", Input)
 
--- Verify Button
 local Verify = Instance.new("TextButton", Main)
 Verify.Size = UDim2.new(0, 150, 0, 35); Verify.Position = UDim2.new(0.5, -75, 0.75, 0); Verify.BackgroundColor3 = Color3.fromRGB(25, 25, 25); Verify.Text = "VERIFY"; Verify.TextColor3 = Accent; Verify.Font = FontStyle; Verify.TextSize = 18; Instance.new("UICorner", Verify)
 local VerifyStroke = Instance.new("UIStroke", Verify); VerifyStroke.Color = Accent
@@ -63,7 +60,7 @@ UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputT
 
 -- [[ VERIFICATION ]]
 Verify.MouseButton1Click:Connect(function()
-    if Input.Text:gsub("%s+", "") == CORRECT_KEY then
+    if Input.Text == CORRECT_KEY then
         Verify.Text = "SUCCESS"; Verify.TextColor3 = Color3.fromRGB(0, 255, 0); task.wait(0.5); KeyGui:Destroy(); ON_SUCCESS()
     else
         Verify.Text = "INVALID"; Verify.TextColor3 = Color3.fromRGB(255, 0, 0); task.wait(1); Verify.Text = "VERIFY"; Verify.TextColor3 = Accent
