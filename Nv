@@ -1,27 +1,22 @@
 -- [[ CONFIGURATION ]]
-local key = "NvKey.DC101" -- [[ TYPE YOUR KEY HERE ]]
-local CORRECT_KEY = "NvKey.DC101" -- The ONLY key that works
+local key = "NvKey.DC101231" -- [[ TYPE YOUR KEY HERE ]]
+local CORRECT_KEY = "NvKey.DC101" -- The ONLY key that is allowed
 
 local function ON_SUCCESS()
     print("Access Granted! Loading NvHub...")
     loadstring(game:HttpGet("https://raw.githubusercontent.com/Itsnvfr/NvHub/refs/heads/main/hub"))()
 end
 
--- [[ SECURE BYPASS CHECK ]]
-local function CheckBypass()
-    -- Only bypass if the key is exactly right and NOT empty
-    if key ~= nil and key ~= "" and key == CORRECT_KEY then
-        return true
-    end
-    return false
-end
-
-if CheckBypass() then
+-- [[ STRICTOR BYPASS CHECK ]]
+-- This specifically checks if the local variable 'key' is EXACTLY the 'CORRECT_KEY'
+if key == CORRECT_KEY then
     ON_SUCCESS()
-    return -- Kills the script here so UI never loads
+    return -- Only exits here if it's a 100% perfect match
+else
+    warn("Key mismatch detected. Launching UI...")
 end
 
--- [[ UI SETUP (Only runs if Key is wrong or missing) ]]
+-- [[ UI SETUP (Only runs if key is WRONG) ]]
 local UIS = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
@@ -53,7 +48,7 @@ Verify.Size = UDim2.new(0, 150, 0, 35); Verify.Position = UDim2.new(0.5, -75, 0.
 local VerifyStroke = Instance.new("UIStroke", Verify); VerifyStroke.Color = Accent
 
 -- [[ DRAG LOGIC ]]
-local dragging, dragInput, dragStart, startPos
+local dragging, dragStart, startPos
 Main.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = input.Position; startPos = Main.Position end end)
 UIS.InputChanged:Connect(function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then local delta = input.Position - dragStart; Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y) end end)
 UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
