@@ -1,1 +1,273 @@
-down
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+
+local PixelLib = {
+    Theme = {
+        Main = Color3.fromRGB(10, 10, 10),      -- Deep Dark
+        Accent = Color3.fromRGB(0, 255, 150),   -- Matrix Green/Cyan
+        Surface = Color3.fromRGB(20, 20, 20),   -- Elevated Surfaces
+        Text = Color3.fromRGB(255, 255, 255),
+        DimText = Color3.fromRGB(120, 120, 120),
+        Border = Color3.fromRGB(40, 40, 40)
+    },
+    Font = Enum.Font.Arcade
+}
+
+function PixelLib:CreateWindow(TitleText)
+    -- Remove existing UI
+    if CoreGui:FindFirstChild("PixelModernUI") then CoreGui.PixelModernUI:Destroy() end
+
+    local Screen = Instance.new("ScreenGui", CoreGui)
+    Screen.Name = "PixelModernUI"
+    Screen.ResetOnSpawn = false
+
+    local Main = Instance.new("Frame", Screen)
+    Main.Name = "MainFrame"
+    Main.Size = UDim2.new(0, 500, 0, 350)
+    Main.Position = UDim2.new(0.5, -250, 0.5, -175)
+    Main.BackgroundColor3 = self.Theme.Main
+    Main.BorderSizePixel = 2
+    Main.BorderColor3 = self.Theme.Accent
+
+    -- Header
+    local Header = Instance.new("Frame", Main)
+    Header.Size = UDim2.new(1, 0, 0, 30)
+    Header.BackgroundColor3 = self.Theme.Accent
+    Header.BorderSizePixel = 0
+    
+    local Title = Instance.new("TextLabel", Header)
+    Title.Size = UDim2.new(1, -10, 1, 0)
+    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = TitleText:upper()
+    Title.TextColor3 = self.Theme.Main
+    Title.Font = self.Font
+    Title.TextSize = 18
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Container for Tabs
+    local Sidebar = Instance.new("ScrollingFrame", Main)
+    Sidebar.Position = UDim2.new(0, 5, 0, 35)
+    Sidebar.Size = UDim2.new(0, 120, 1, -40)
+    Sidebar.BackgroundTransparency = 1
+    Sidebar.BorderSizePixel = 0
+    Sidebar.ScrollBarThickness = 0
+    
+    local SideLayout = Instance.new("UIListLayout", Sidebar)
+    SideLayout.Padding = UDim.new(0, 2)
+
+    local PageContainer = Instance.new("Frame", Main)
+    PageContainer.Position = UDim2.new(0, 130, 0, 35)
+    PageContainer.Size = UDim2.new(1, -135, 1, -40)
+    PageContainer.BackgroundTransparency = 1
+
+    -- Dragging Logic
+    local dragging, dragInput, dragStart, startPos
+    Header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true; dragStart = input.Position; startPos = Main.Position
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+
+    local Tabs = {}
+
+    function Tabs:CreateTab(Name)
+        local TabBtn = Instance.new("TextButton", Sidebar)
+        TabBtn.Size = UDim2.new(1, 0, 0, 28)
+        TabBtn.BackgroundColor3 = PixelLib.Theme.Surface
+        TabBtn.BorderSizePixel = 0
+        TabBtn.Text = Name
+        TabBtn.TextColor3 = PixelLib.Theme.DimText
+        TabBtn.Font = PixelLib.Font
+        TabBtn.TextSize = 14
+        
+        local Page = Instance.new("ScrollingFrame", PageContainer)
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.Visible = false
+        Page.BorderSizePixel = 0
+        Page.ScrollBarThickness = 2
+        Page.ScrollBarImageColor3 = PixelLib.Theme.Accent
+        
+        local PageLayout = Instance.new("UIListLayout", Page)
+        PageLayout.Padding = UDim.new(0, 5)
+
+        TabBtn.MouseButton1Click:Connect(function()
+            for _, v in pairs(PageContainer:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
+            for _, v in pairs(Sidebar:GetChildren()) do if v:IsA("TextButton") then v.TextColor3 = PixelLib.Theme.DimText; v.BackgroundColor3 = PixelLib.Theme.Surface end end
+            Page.Visible = true
+            TabBtn.TextColor3 = PixelLib.Theme.Accent
+            TabBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+        end)
+
+        -- Default selection
+        if #Sidebar:GetChildren() == 2 then -- 1 layout + 1 btn
+            Page.Visible = true
+            TabBtn.TextColor3 = PixelLib.Theme.Accent
+        end
+
+        local Elements = {}
+
+        function Elements:CreateButton(Text, Callback)
+            local Btn = Instance.new("TextButton", Page)
+            Btn.Size = UDim2.new(1, -5, 0, 30)
+            Btn.BackgroundColor3 = PixelLib.Theme.Surface
+            Btn.BorderColor3 = PixelLib.Theme.Border
+            Btn.BorderSizePixel = 1
+            Btn.Text = "[ " .. Text:upper() .. " ]"
+            Btn.TextColor3 = PixelLib.Theme.Text
+            Btn.Font = PixelLib.Font
+            Btn.TextSize = 14
+            Btn.AutoButtonColor = false
+
+            Btn.MouseButton1Down:Connect(function() 
+                Btn.BackgroundColor3 = PixelLib.Theme.Accent
+                Btn.TextColor3 = PixelLib.Theme.Main
+            end)
+            Btn.MouseButton1Up:Connect(function() 
+                Btn.BackgroundColor3 = PixelLib.Theme.Surface
+                Btn.TextColor3 = PixelLib.Theme.Text
+                Callback()
+            end)
+        end
+
+        function Elements:CreateToggle(Text, Default, Callback)
+            local Toggled = Default
+            local ToggleFrame = Instance.new("TextButton", Page)
+            ToggleFrame.Size = UDim2.new(1, -5, 0, 30)
+            ToggleFrame.BackgroundColor3 = PixelLib.Theme.Surface
+            ToggleFrame.BorderSizePixel = 0
+            ToggleFrame.Text = ""
+
+            local Label = Instance.new("TextLabel", ToggleFrame)
+            Label.Position = UDim2.new(0, 35, 0, 0)
+            Label.Size = UDim2.new(1, -40, 1, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = Text
+            Label.Font = PixelLib.Font
+            Label.TextColor3 = PixelLib.Theme.Text
+            Label.TextSize = 14
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+
+            local Status = Instance.new("TextLabel", ToggleFrame)
+            Status.Size = UDim2.new(0, 20, 0, 20)
+            Status.Position = UDim2.new(0, 7, 0, 5)
+            Status.BackgroundColor3 = PixelLib.Theme.Main
+            Status.BorderColor3 = Toggled and PixelLib.Theme.Accent or PixelLib.Theme.Border
+            Status.BorderSizePixel = 1
+            Status.Text = Toggled and "X" or ""
+            Status.TextColor3 = PixelLib.Theme.Accent
+            Status.Font = PixelLib.Font
+            Status.TextSize = 16
+
+            ToggleFrame.MouseButton1Click:Connect(function()
+                Toggled = not Toggled
+                Status.Text = Toggled and "X" or ""
+                Status.BorderColor3 = Toggled and PixelLib.Theme.Accent or PixelLib.Theme.Border
+                Callback(Toggled)
+            end)
+        end
+
+        function Elements:CreateSlider(Text, Min, Max, Default, Callback)
+            local SliderFrame = Instance.new("Frame", Page)
+            SliderFrame.Size = UDim2.new(1, -5, 0, 45)
+            SliderFrame.BackgroundColor3 = PixelLib.Theme.Surface
+            SliderFrame.BorderSizePixel = 0
+
+            local Label = Instance.new("TextLabel", SliderFrame)
+            Label.Size = UDim2.new(1, -10, 0, 20)
+            Label.Position = UDim2.new(0, 5, 0, 2)
+            Label.BackgroundTransparency = 1
+            Label.Text = Text .. ": " .. Default
+            Label.Font = PixelLib.Font
+            Label.TextColor3 = PixelLib.Theme.Text
+            Label.TextSize = 14
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+
+            local SliderBack = Instance.new("TextButton", SliderFrame)
+            SliderBack.Position = UDim2.new(0, 5, 0, 25)
+            SliderBack.Size = UDim2.new(1, -10, 0, 12)
+            SliderBack.BackgroundColor3 = PixelLib.Theme.Main
+            SliderBack.BorderSizePixel = 1
+            SliderBack.BorderColor3 = PixelLib.Theme.Border
+            SliderBack.Text = ""
+
+            local Bar = Instance.new("Frame", SliderBack)
+            Bar.Size = UDim2.new((Default - Min) / (Max - Min), 0, 1, 0)
+            Bar.BackgroundColor3 = PixelLib.Theme.Accent
+            Bar.BorderSizePixel = 0
+
+            local function Update(Input)
+                local SizeX = math.clamp((Input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                local Val = math.floor(Min + ((Max - Min) * SizeX))
+                Bar.Size = UDim2.new(SizeX, 0, 1, 0)
+                Label.Text = Text .. ": " .. Val
+                Callback(Val)
+            end
+
+            local sliding = false
+            SliderBack.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then sliding = true; Update(i) end end)
+            UIS.InputChanged:Connect(function(i) if sliding and i.UserInputType == Enum.UserInputType.MouseMovement then Update(i) end end)
+            UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end end)
+        end
+
+        function Elements:CreateBind(Text, Default, Callback)
+            local Key = Default.Name or Default
+            local BindFrame = Instance.new("TextButton", Page)
+            BindFrame.Size = UDim2.new(1, -5, 0, 30)
+            BindFrame.BackgroundColor3 = PixelLib.Theme.Surface
+            BindFrame.Text = ""
+            
+            local Label = Instance.new("TextLabel", BindFrame)
+            Label.Position = UDim2.new(0, 5, 0, 0)
+            Label.Size = UDim2.new(0.5, 0, 1, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = Text
+            Label.Font = PixelLib.Font
+            Label.TextColor3 = PixelLib.Theme.Text
+            Label.TextSize = 14
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+
+            local KeyLabel = Instance.new("TextLabel", BindFrame)
+            KeyLabel.Position = UDim2.new(0.5, 0, 0, 5)
+            KeyLabel.Size = UDim2.new(0.5, -5, 0, 20)
+            KeyLabel.BackgroundColor3 = PixelLib.Theme.Main
+            KeyLabel.BorderColor3 = PixelLib.Theme.Border
+            KeyLabel.BorderSizePixel = 1
+            KeyLabel.Text = "[" .. Key .. "]"
+            KeyLabel.TextColor3 = PixelLib.Theme.Accent
+            KeyLabel.Font = PixelLib.Font
+            KeyLabel.TextSize = 14
+
+            BindFrame.MouseButton1Click:Connect(function()
+                KeyLabel.Text = "[...]"
+                local input = UIS.InputBegan:Wait()
+                if input.UserInputType == Enum.UserInputType.Keyboard then
+                    KeyLabel.Text = "[" .. input.KeyCode.Name .. "]"
+                    Callback(input.KeyCode)
+                end
+            end)
+        end
+
+        return Elements
+    end
+    return Tabs
+end
+
+-- [[ EXAMPLE USAGE ]]
+-- local Window = PixelLib:CreateWindow("NvHub v2")
+-- local Combat = Window:CreateTab("Combat")
+-- Combat:CreateToggle("Aimbot", false, function(t) print("Aimbot:", t) end)
+-- Combat:CreateSlider("Smoothness", 1, 20, 5, function(v) print("Smooth:", v) end)
+-- Combat:CreateButton("Reset Config", function() print("Resetting...") end)
+-- Combat:CreateBind("Menu Key", Enum.KeyCode.RightShift, function(k) print("New bind:", k) end)
+
+return PixelLib
